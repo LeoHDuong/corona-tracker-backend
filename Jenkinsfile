@@ -20,7 +20,7 @@ pipeline {
 
 	stage('Build JAR') {
 	    steps {
-		sh 'chmod +x mvnw && ./mvnw clean package -DskipTests'
+		sh 'mvn clean package -DskipTests'
      	    }
     	}
 
