@@ -18,20 +18,24 @@ pipeline {
             }
         }
 
+        stage('Secret Scan - Gitleaks') {
+           steps {
+                sh '''
+                    gitleaks detect --source . --report-format json -->
+                '''
+                archiveArtifacts artifacts: 'gitleaks-report.json', al>
+            }
+        }
+
 	stage('Build JAR') {
 	    steps {
-		sh 'mvn clean package -DskipTests'
+        	sh '''
+            	    export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+            	    export PATH=$JAVA_HOME/bin:$PATH
+            	    mvn clean package -DskipTests
+        	'''
      	    }
     	}
-
-	stage('Secret Scan - Gitleaks') {
- 	   steps {
-        	sh '''
-            	    gitleaks detect --source . --report-format json --report-path gitleaks-report.json --exit-code 0
-        	'''
-        	archiveArtifacts artifacts: 'gitleaks-report.json', allowEmptyArchive: true
-    	    }
-	}
 
         stage('Build Docker Image') {
             steps {
