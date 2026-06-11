@@ -24,6 +24,15 @@ pipeline {
      	    }
     	}
 
+	stage('Secret Scan - Gitleaks') {
+ 	   steps {
+        	sh '''
+            	    gitleaks detect --source . --report-format json --report-path gitleaks-report.json --exit-code 0
+        	'''
+        	archiveArtifacts artifacts: 'gitleaks-report.json', allowEmptyArchive: true
+    	    }
+	}
+
         stage('Build Docker Image') {
             steps {
                 sh """
