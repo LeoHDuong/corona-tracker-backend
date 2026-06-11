@@ -19,11 +19,11 @@ pipeline {
         }
 
         stage('Secret Scan - Gitleaks') {
-           steps {
+            steps {
                 sh '''
-                    gitleaks detect --source . --report-format json -->
+                    gitleaks detect --source . --report-format json --report-path gitleaks-report.json --exit-code 0
                 '''
-                archiveArtifacts artifacts: 'gitleaks-report.json', al>
+                archiveArtifacts artifacts: 'gitleaks-report.json', allowEmptyArchive: true
             }
         }
 
