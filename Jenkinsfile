@@ -27,20 +27,6 @@ pipeline {
             }
         }
 
-	stage('SonarQube Analysis') {
- 	   steps {
-        	withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-            	    sh """
-                	sonar-scanner \
-                    	    -Dsonar.projectKey=corona-tracker-backend \
-                    	    -Dsonar.sources=src \
-                    	    -Dsonar.host.url=http://sonarqube:9000 \
-                    	    -Dsonar.token=\${SONAR_TOKEN}
-            	    """
-                }
-	    }
-	}
-
 	stage('Build JAR') {
 	    steps {
         	sh '''
@@ -53,6 +39,21 @@ pipeline {
         	'''
      	    }
     	}
+
+	stage('SonarQube Analysis') {
+	    steps {
+	        withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+	            sh """
+	                sonar-scanner \
+	                    -Dsonar.projectKey=corona-tracker-backend \
+	                    -Dsonar.sources=src \
+	                    -Dsonar.java.binaries=target/classes \
+	                    -Dsonar.host.url=http://sonarqube:9000 \
+	                    -Dsonar.token=\${SONAR_TOKEN}
+	            """
+	        }
+	    }
+	}
 
         stage('Build Docker Image') {
             steps {
