@@ -100,9 +100,9 @@ pipeline {
                         GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no" \
                         git clone ${HELM_REPO} helm-charts
                         helm upgrade --install backend helm-charts/backend \
-                            --set image.repository=${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME} \
-                            --set image.tag=${IMAGE_TAG} \
-                            --kubeconfig /home/leo/.kube/config
+			    --set image.repository=${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME} \
+			    --set image.tag=${IMAGE_TAG} \
+			    --kubeconfig /home/jenkins/.kube/config
                     """
                 }
             }
