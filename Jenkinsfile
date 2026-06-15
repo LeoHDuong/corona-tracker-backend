@@ -83,6 +83,20 @@ pipeline {
             }
         }
 
+	stage('Sign Image - Cosign') {
+	    steps {
+	        withCredentials([string(credentialsId: 'cosign-password', variable: 'COSIGN_PASSWORD')]) {
+	            sh """
+	                cosign sign --key /etc/cosign/cosign.key \
+	                    -a "pipeline=jenkins" \
+	                    -a "build=${IMAGE_TAG}" \
+	                    --tlog-upload=false \
+	                    ${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}
+	            """
+	        }
+	    }
+	}
+
         stage('Deploy with Helm') {
             steps {
                 withCredentials([sshUserPrivateKey(
