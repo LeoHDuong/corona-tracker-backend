@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'jenkins-worker'
+        label 'docker-agent'
     }
 
     environment {
@@ -29,14 +29,7 @@ pipeline {
 
 	stage('Build JAR') {
 	    steps {
-        	sh '''
-            	    export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-            	    export PATH=$JAVA_HOME/bin:$PATH
-            	    echo "JAVA_HOME is: $JAVA_HOME"
-            	    java -version
-            	    mvn -version
-            	    mvn clean package -DskipTests
-        	'''
+        	sh 'mvn clean package -DskipTests'
      	    }
     	}
 
