@@ -61,20 +61,20 @@ pipeline {
         }
 
         stage('Push to Harbor') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'harbor-credentials',
-                    usernameVariable: 'HARBOR_USER',
-                    passwordVariable: 'HARBOR_PASS'
-                )]) {
-                    sh """
-                        docker login ${HARBOR_REGISTRY} -u ${HARBOR_USER} -p ${HARBOR_PASS}
-                        docker push ${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}
-                        docker push ${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME}:latest
-                    """
-                }
-            }
-        }
+	    steps {
+	        withCredentials([string(credentialsId: 'vault-token', variable: 'VAULT_TOKEN')]) {
+	            sh """
+	                export VAULT_ADDR=http://nexus:8200
+	                export VAULT_TOKEN=\${VAULT_TOKEN}
+	                HARBOR_USER=\$(vault kv get -field=username secret/corona-tracker/harbor)
+	                HARBOR_PASS=\$(vault kv get -field=password secret/corona-tracker/harbor)
+	                docker login ${HARBOR_REGISTRY} -u \$HARBOR_USER -p \$HARBOR_PASS
+	                docker push ${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}
+	                docker push ${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME}:latest
+	            """
+	        }
+	    }
+	}
 
 	stage('Sign Image - Cosign') {
 	    steps {
