@@ -40,7 +40,9 @@ pipeline {
 	                sh """
 	                    export VAULT_ADDR=http://nexus:8200
 	                    export VAULT_TOKEN=\${VAULT_TOKEN}
+	                    set +x
 	                    SONAR_TOKEN=\$(vault kv get -field=token secret/corona-tracker/sonarqube)
+	                    set -x
 	                    sonar-scanner \
 	                        -Dsonar.projectKey=corona-tracker-backend \
 	                        -Dsonar.sources=src \
@@ -69,9 +71,11 @@ pipeline {
 	            sh """
 	                export VAULT_ADDR=http://nexus:8200
 	                export VAULT_TOKEN=\${VAULT_TOKEN}
+	                set +x
 	                HARBOR_USER=\$(vault kv get -field=username secret/corona-tracker/harbor)
 	                HARBOR_PASS=\$(vault kv get -field=password secret/corona-tracker/harbor)
-	                docker login ${HARBOR_REGISTRY} -u \$HARBOR_USER -p \$HARBOR_PASS
+	                docker login ${HARBOR_REGISTRY} -u \$HARBOR_USER -p \$HARBOR_PASS 2>/dev/null
+	                set -x
 	                docker push ${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}
 	                docker push ${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME}:latest
 	            """
@@ -85,8 +89,10 @@ pipeline {
 	            sh """
 	                export VAULT_ADDR=http://nexus:8200
 	                export VAULT_TOKEN=\${VAULT_TOKEN}
+	                set +x
 	                COSIGN_PASSWORD=\$(vault kv get -field=password secret/corona-tracker/cosign)
 	                export COSIGN_PASSWORD
+	                set -x
 	                cosign sign --key /etc/cosign/cosign.key \
 	                    -a "pipeline=jenkins" \
 	                    -a "build=${IMAGE_TAG}" \
