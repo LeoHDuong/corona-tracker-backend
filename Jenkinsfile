@@ -104,22 +104,35 @@ pipeline {
 	}
 
         stage('Deploy with Helm') {
-            steps {
-                withCredentials([sshUserPrivateKey(
-                    credentialsId: 'github-ssh',
-                    keyFileVariable: 'SSH_KEY'
-                )]) {
-                    sh """
-                        GIT_SSH_COMMAND="ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no" \
-                        git clone ${HELM_REPO} helm-charts
-                        helm upgrade --install backend helm-charts/backend \
-			    --set image.repository=${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME} \
-			    --set image.tag=${IMAGE_TAG} \
-			    --kubeconfig /home/jenkins/.kube/config
-                    """
-                }
-            }
-        }
+	    steps {
+	        withCredentials([string(credentialsId: 'vault-token', variable: 'VAULT_TOKEN')]) {
+	            sh """
+	                export VAULT_ADDR=http://nexus:8200
+	                export VAULT_TOKEN=\${VAULT_TOKEN}
+	                set +x
+	                MONGO_URI=\$(vault kv get -field=uri secret/corona-tracker/mongodb)
+	                set -x
+	                helm repo add nexus-helm http://nexus:8081/repository/helm-charts/ --username admin --password 'LuckyAdudu123.'
+	                helm repo update
+	
+	                helm template backend nexus-helm/webapp \
+	                    --version 0.1.0 \
+	                    -f values.yaml \
+	                    --set image.repository=${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME} \
+	                    --set image.tag=${IMAGE_TAG} \
+	                    --set-string env.SPRING_DATA_MONGODB_URI="\$MONGO_URI"
+	
+	                helm upgrade --install backend nexus-helm/webapp \
+	                    --version 0.1.0 \
+	                    -f values.yaml \
+	                    --set image.repository=${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME} \
+	                    --set image.tag=${IMAGE_TAG} \
+	                    --set-string env.SPRING_DATA_MONGODB_URI="\$MONGO_URI" \
+	                    --kubeconfig /home/jenkins/.kube/config
+	            """
+	        }
+	    }
+	}
     }
 
     post {

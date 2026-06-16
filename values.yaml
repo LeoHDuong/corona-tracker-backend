@@ -1,0 +1,41 @@
+replicaCount: 1
+
+image:
+  repository: harbor/corona-tracker/backend
+  pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets:
+  - name: harbor-secret
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: 8080
+  initialDelaySeconds: 60
+  periodSeconds: 15
+  failureThreshold: 5
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 8080
+  initialDelaySeconds: 60
+  periodSeconds: 15
+  failureThreshold: 5
+
+autoscaling:
+  enabled: false
