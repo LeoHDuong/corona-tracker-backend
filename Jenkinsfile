@@ -35,18 +35,21 @@ pipeline {
 
 	stage('SonarQube Analysis') {
 	    steps {
-		catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-		    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-		        sh """
-		          sonar-scanner \
-		                -Dsonar.projectKey=corona-tracker-backend \
-		                -Dsonar.sources=src \
-		                -Dsonar.java.binaries=target/classes \
-		                -Dsonar.host.url=http://sonarqube:9000 \
-		                -Dsonar.token=\${SONAR_TOKEN}
-		        """
-		    }
-		}
+	        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+	            withCredentials([string(credentialsId: 'vault-token', variable: 'VAULT_TOKEN')]) {
+	                sh """
+	                    export VAULT_ADDR=http://nexus:8200
+	                    export VAULT_TOKEN=\${VAULT_TOKEN}
+	                    SONAR_TOKEN=\$(vault kv get -field=token secret/corona-tracker/sonarqube)
+	                    sonar-scanner \
+	                        -Dsonar.projectKey=corona-tracker-backend \
+	                        -Dsonar.sources=src \
+	                        -Dsonar.java.binaries=target/classes \
+	                        -Dsonar.host.url=http://sonarqube:9000 \
+	                        -Dsonar.token=\$SONAR_TOKEN
+	                """
+	            }
+	        }
 	    }
 	}
 
@@ -78,8 +81,12 @@ pipeline {
 
 	stage('Sign Image - Cosign') {
 	    steps {
-	        withCredentials([string(credentialsId: 'cosign-password', variable: 'COSIGN_PASSWORD')]) {
+	        withCredentials([string(credentialsId: 'vault-token', variable: 'VAULT_TOKEN')]) {
 	            sh """
+	                export VAULT_ADDR=http://nexus:8200
+	                export VAULT_TOKEN=\${VAULT_TOKEN}
+	                COSIGN_PASSWORD=\$(vault kv get -field=password secret/corona-tracker/cosign)
+	                export COSIGN_PASSWORD
 	                cosign sign --key /etc/cosign/cosign.key \
 	                    -a "pipeline=jenkins" \
 	                    -a "build=${IMAGE_TAG}" \
