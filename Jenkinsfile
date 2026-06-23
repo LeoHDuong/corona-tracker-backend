@@ -27,6 +27,21 @@ pipeline {
             }
         }
 
+	stage('Semgrep') {
+	    steps {
+	        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+	            sh '''
+	                semgrep scan \
+	                    --config=auto \
+	                    --json \
+	                    --output=semgrep-report.json \
+	                    src/
+	            '''
+	            archiveArtifacts artifacts: 'semgrep-report.json', allowEmptyArchive: true
+	        }
+	    }
+	}
+
         stage('Build JAR') {
             steps {
                 sh 'mvn clean package -DskipTests'
