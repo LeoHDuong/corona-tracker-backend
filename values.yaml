@@ -39,3 +39,7 @@ readinessProbe:
 
 autoscaling:
   enabled: false
+
+envFrom:
+  - secretRef:
+      name: backend-secrets
